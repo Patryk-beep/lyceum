@@ -7,11 +7,11 @@ This repository is a [Claude Code](https://code.claude.com) **plugin marketplace
 In Claude Code:
 
 ```
-/plugin marketplace add OWNER/REPO
+/plugin marketplace add Patryk-beep/lyceum
 /plugin install lyceum@lyceum-marketplace
 ```
 
-Replace `OWNER/REPO` with this repository (e.g. `your-username/lyceum`). Then restart the session — all nine skills become available as `lyceum:<skill>`.
+Then restart the session — all nine skills become available as `lyceum:<skill>`.
 
 ## What's inside
 
