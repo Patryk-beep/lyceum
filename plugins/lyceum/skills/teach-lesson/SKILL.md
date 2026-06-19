@@ -17,7 +17,7 @@ Before doing anything else, read these reference files (resolve the plugin root 
 
 Then read the active subject manifest at `learning/<slug>/manifest.json`. Also read `knowledge-map.json` (for misconceptions and concept summaries) and `curriculum.json` (for the module's objectives) in the same folder.
 
-**If no manifest exists, STOP.** Do not teach anything. Tell the user to run `lyceum:learn` first to set up the workspace.
+**If no manifest exists, STOP.** Do not teach anything. Tell the user to run `lyceum:learn` first to set up the workspace. Likewise, if the manifest exists but `knowledge-map.json` is missing, STOP and tell the user to run `lyceum:research-topic` first; if `curriculum.json` is missing, STOP and route to `lyceum:build-curriculum`. Never teach from a half-built workspace — derive the required inputs from disk, never assume an earlier skill ran this session.
 
 Identify the module to teach: the module at `current.moduleId`. Confirm it is `available` or `in-progress` (its prereqs are mastered). If it is `locked`, stop and tell the user which prerequisite module must be mastered first.
 
@@ -61,3 +61,17 @@ Then rewrite `progress.md` in the exact format defined in MANIFEST.md (header li
 - **Allocate review-item ids as (max existing numeric suffix) + 1.** Never reuse an `r-id`.
 - **Lead concrete, flag misconceptions, dual-code.** These are the non-negotiable teaching moves, not optional flourishes.
 - **State, not conversation.** You read the manifest at the start and write it at the end; never assume another skill ran this session. Keep `manifest.json` valid JSON at all times.
+
+## Machine output (for the Lyceum app)
+
+When run inside the **Lyceum desktop app** (an automated headless session), also write the lesson's checks-for-understanding to a machine-readable quiz file so the app can render and grade them locally without spending another model turn:
+
+- Path: `quizzes/<moduleId>-<unixSeconds>.json`
+- Shape:
+  ```json
+  { "items": [
+    { "id": "q1", "stem": "…", "choices": ["…", "…"], "correct": 0,
+      "rationale": "why this is right", "objectiveIds": ["m03-o1"], "lane": "formative" }
+  ] }
+  ```
+- `lane` ∈ `formative` (rationale only — writes nothing mastery-bearing), `review` (feeds the Leitner queue), `assignment` (mastery-bearing — graded only by `assess-understanding`, never locally). Prefer free/short recall; use `choices`+`correct` only for genuine MCQs with plausible distractors. This file is **machine output only** — it never replaces the human-readable lesson, and writing it does **not** assert mastery.

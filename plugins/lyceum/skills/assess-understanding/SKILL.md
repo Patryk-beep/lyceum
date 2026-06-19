@@ -20,7 +20,7 @@ Then read the active subject manifest at `learning/<slug>/manifest.json`. If no 
 
 ## Process
 
-1. **Locate the submission.** Find the `assignments[]` entry being graded — usually the one with `status:"submitted"`, or, if the learner just pasted an answer conversationally against an `open` assignment, the matching entry. If that entry is not yet `submitted`, flip it to `status:"submitted"` now, then grade. Open the assignment file at its `file` path to read the brief, the rubric, the learner's submission, and any held answer key.
+1. **Locate the submission.** Find the `assignments[]` entry being graded — usually the one with `status:"submitted"`, or, if the learner just pasted an answer conversationally against an `open` assignment, the matching entry. If that entry is not yet `submitted`, flip it to `status:"submitted"` now, then grade. Read the brief, the rubric, and any held answer key from the assignment's `file` path. **For the learner's actual submission: if the entry carries a `submissionFile` (the Lyceum app writes the hand-in there, e.g. `submissions/a02.md`), read THAT file — it is the authoritative answer. Otherwise fall back to the inline SUBMISSION PLACEHOLDER in the brief.** When the entry's `inputType` is `"choice"`, the submission is the chosen option text — grade it against the held answer key.
 
 2. **Identify the targeted objectives.** From the entry's `objectives[]`, load each targeted objective from its module so you grade against the right standard. Note the module's `level` and `masteryThreshold`.
 
@@ -76,3 +76,17 @@ Also rewrite `progress.md` in the exact format defined in MANIFEST.md (module ma
 - **Any miss resets the item to Box 1, due tomorrow** — the failure is the signal.
 - **Always consolidate a productive-failure task** before moving on.
 - **Allocate ids as (max existing numeric suffix) + 1; never reuse an id.** Diagnose the SPECIFIC error, not just "wrong".
+
+## Machine output (for the Lyceum app)
+
+When run inside the **Lyceum desktop app**, in addition to the manifest writes, emit fresh follow-up retrieval items as a machine-readable quiz file the app can schedule and grade locally:
+
+- Path: `quizzes/<moduleId>-<unixSeconds>.json`
+- Shape:
+  ```json
+  { "items": [
+    { "id": "q1", "stem": "…", "choices": ["…", "…"], "correct": 0,
+      "rationale": "why", "objectiveIds": ["m03-o1"], "lane": "review" }
+  ] }
+  ```
+- Use the `review` lane for spaced-recall items you seed into `reviewQueue`, and `formative` for ungraded checks. Mastery-bearing grading stays in THIS skill (the single writer) — never mark a `lane:"assignment"` item correct outside an assess turn. This file is **machine output only**; the human feedback still lives in the assignment file.

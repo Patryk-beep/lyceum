@@ -16,7 +16,7 @@ Before doing anything, read these reference files (they carry the contracts and 
 - `${CLAUDE_PLUGIN_ROOT}/references/LEVELS.md` — the 6-level scale, so the capstone is scaled to `scale.target`.
 - `${CLAUDE_PLUGIN_ROOT}/references/ASSIGNMENTS.md` — the authentic task types (project, problem-based scenario, teach-it, capstone/portfolio) and the rubric conventions.
 
-Then read the active subject manifest at `learning/<slug>/manifest.json`. If no manifest exists (or it is unreadable), **STOP** and tell the user to run `lyceum:learn` first — never invent state. Resolve `<slug>` from the active subject; if more than one subject exists, confirm which one with the user.
+Then read the active subject manifest at `learning/<slug>/manifest.json`. If no manifest exists (or it is unreadable), **STOP** and tell the user to run `lyceum:learn` first — never invent state. If the manifest exists but `knowledge-map.json` is missing, STOP and tell the user to run `lyceum:research-topic` first — the capstone's driving question and deliverable are drawn from its `authenticTasks` and `levelDescriptors`. Resolve `<slug>` from the active subject; if more than one subject exists, confirm which one with the user.
 
 ## Process
 
@@ -39,9 +39,11 @@ Then read the active subject manifest at `learning/<slug>/manifest.json`. If no 
 
    Write the brief, the milestones, the rubric, and the defense format into `capstone.md`.
 
+   **In the Lyceum app:** also emit `capstone.json` (see Machine output) declaring the deliverable's `inputType`, so the app renders the right hand-in widget, then **STOP and tell the user to submit their deliverable through the app** — never fabricate the deliverable yourself. The app writes the learner's hand-in to `submissions/capstone.md`.
+
 4. **Coach through the milestones.** Walk the learner milestone by milestone (inquiry → plan → build → critique-and-revise → final). At each, prompt, question, and give graduated hints (pump → hint → prompt) — but **do not produce the work for the learner**. The deliverable must be theirs. Hold the rubric in front of them as the standard at each stage. Never reveal an answer-key or write the artifact on their behalf.
 
-5. **Run the defense at submission.** When the learner submits the final deliverable and self-reflection, run the **oral-style defense Q&A**: ask probing questions that test depth, justification of choices, awareness of trade-offs and limitations, and transfer beyond the artifact. Require the learner to answer each question **before** you offer any assessment or model response.
+5. **Run the defense at submission.** When the learner submits the final deliverable and self-reflection (in the Lyceum app, read it from `submissions/capstone.md`), run the **oral-style defense Q&A**: ask probing questions that test depth, justification of choices, awareness of trade-offs and limitations, and transfer beyond the artifact. Require the learner to answer each question **before** you offer any assessment or model response.
 
 6. **Score every criterion.** After the defense, score all seven criteria on the 4-band scale, criterion-referenced (against the rubric description, not against other learners). Note specifically where each criterion landed and why.
 
@@ -71,3 +73,17 @@ Write these back to `learning/<slug>/manifest.json`, then bump `updated` to toda
 - **Authenticity is mandatory.** The deliverable must target a real audience beyond the tutor, and the project must be scaled to `scale.target` (bounded task at L3–4, open project at L5, original contribution at L6).
 - **Allocate ids as (max existing numeric suffix) + 1; never reuse an id** (applies to any history or item ids touched).
 - **Always bump `updated`** and keep the manifest valid JSON.
+
+## Machine output (for the Lyceum app)
+
+When run inside the **Lyceum desktop app**, the learner hands in the deliverable through the UI instead of conversationally. Support that with two file conventions (the standalone plugin chain ignores both):
+
+- **On the FIRST capstone turn** — designing the brief, before any deliverable exists — in addition to `capstone.md`, write `capstone.json`:
+  ```json
+  { "prompt": "<one-line statement of the deliverable the learner must hand in>",
+    "inputType": "file",
+    "options": [],
+    "language": null }
+  ```
+  `inputType` picks the hand-in widget: `"file"` or `"markdown"` for a written deliverable/portfolio, `"code"` (also set `language`) for a software artifact. After writing it, **STOP and await the hand-in** — never invent the learner's work.
+- **On the NEXT turn**, if `submissions/capstone.md` exists, **that file IS the learner's deliverable**: read it, run the defense Q&A, score the rubric, and certify or route to revise per the Process above. It is machine input from the app; the human-readable brief, transcript, scores, and verdict still live in `capstone.md`.
